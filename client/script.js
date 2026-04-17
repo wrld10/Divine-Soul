@@ -6,7 +6,7 @@
 /* ── API BASE URL ───────────────────────────
    Change this to your deployed backend URL when going live.
    e.g. "https://your-backend.onrender.com/api"            */
-var API_BASE = "http://localhost:5000/api";
+var API_BASE = "https://divine-soul.vercel.app/api";
 
 /* ── PERSONALITIES DATA ─────────────────── */
 var PERSONALITIES = [
