@@ -11,23 +11,64 @@
 </head>
 <body>
 
-  <!-- AUTH PAGE -->
+  <!-- LEFT SLIDE PANEL (all pages) -->
+  <div class="slide-overlay" id="slideOverlay" onclick="closeSlidePanel()"></div>
+  <aside class="slide-panel" id="slidePanel">
+    <div class="slide-panel-header">
+      <div class="slide-panel-logo">🕉 Divine Soul</div>
+      <button class="slide-panel-close" onclick="closeSlidePanel()">✕</button>
+    </div>
+    <nav class="slide-panel-nav">
+      <a class="slide-nav-item" href="#">📚 Library</a>
+      <a class="slide-nav-item" href="#">🌸 About</a>
+      <a class="slide-nav-item" href="#">ℹ️ Info</a>
+      <a class="slide-nav-item" href="#">✉️ Contact</a>
+    </nav>
+    <div class="slide-panel-footer">Divine Soul © 2025 — Sacred Knowledge Portal</div>
+  </aside>
+
+  <!-- ══════════════════ AUTH PAGE ══════════════════ -->
   <div id="page-auth" class="page active">
     <div class="mandala mandala-top-right"></div>
     <div class="mandala mandala-bottom-left"></div>
 
     <header class="auth-topbar">
-      <div class="logo">
+      <div class="logo logo-clickable" onclick="openSlidePanel()">
         <img src="pfp.jpg" alt="Logo" class="logo-pfp" />
-         <span>Divine Soul</span></div>
-      <div class="lang-wrap" id="auth-lang-wrap">
-        <button class="lang-btn" onclick="toggleLangMenu('auth-lang-wrap')">
-          <span class="lang-btn-text">文ᴬ English</span>
-          <span class="lang-arrow"></span>
-        </button>
-        <div class="lang-menu" id="auth-lang-menu">
-          <div class="lang-option" onclick="selectLang('en','auth-lang-wrap')">文ᴬ English</div>
-          <div class="lang-option" onclick="selectLang('hi','auth-lang-wrap')">🕉 हिन्दी</div>
+        <span>Divine Soul</span>
+      </div>
+      <div class="auth-topbar-right">
+        <!-- Translate -->
+        <div class="lang-wrap" id="auth-lang-wrap">
+          <button class="lang-btn" onclick="toggleLangMenu('auth-lang-wrap')">
+            <span class="lang-btn-text">文ᴬ English</span>
+            <span class="lang-arrow"></span>
+          </button>
+          <div class="lang-menu" id="auth-lang-menu">
+            <div class="lang-option" onclick="selectLang('en','auth-lang-wrap')">文ᴬ English</div>
+            <div class="lang-option" onclick="selectLang('hi','auth-lang-wrap')">🕉 हिन्दी</div>
+          </div>
+        </div>
+        <!-- Settings -->
+        <div class="dash-dropdown-wrap" id="auth-settings-wrap">
+          <button class="lang-btn" onclick="toggleDashDropdown('auth-settings-wrap')">
+            ⚙ <span style="font-size:11px;letter-spacing:0.08em;">Settings</span>
+          </button>
+          <div class="dash-dropdown" id="auth-settings-menu">
+            <div class="dash-dropdown-title">Settings</div>
+            <div class="dash-toggle-row" onclick="toggleDarkMode()">
+              <span>Dark Mode</span>
+              <div class="dash-toggle" id="darkModeToggle"><div class="dash-toggle-knob"></div></div>
+            </div>
+            <div class="dash-toggle-row" onclick="toggleFontSize()">
+              <span>Large Font</span>
+              <div class="dash-toggle" id="fontToggle"><div class="dash-toggle-knob"></div></div>
+            </div>
+            <div class="dash-toggle-row" onclick="resetPreferences()">
+              <span>Reset Preferences</span>
+              <span class="reset-icon">↺</span>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -35,12 +76,12 @@
     <main class="auth-main">
       <div class="auth-card">
         <div class="om-symbol">🕉</div>
-        <h1 class="auth-title" data-en="Divine Soul" data-hi="वैदिक संघ">Divine Soul</h1>
-        <p class="auth-subtitle" data-en="Gateway to Sacred Knowledge" data-hi="दिव्य ज्ञान का द्वार">Gateway to Sacred Knowledge</p>
-        <div class="auth-site-info">
-          <p data-en="Explore the lives, teachings, and sacred books of great spiritual personalities — a sanctuary for seekers of dharma, bhakti, and jnana." data-hi="महान आध्यात्मिक विभूतियों के जीवन, शिक्षाओं और पवित्र ग्रंथों की खोज करें।">Explore the lives, teachings, and sacred books of great spiritual personalities — a sanctuary for seekers of dharma, bhakti, and jnana.</p>
-        </div>
+        <!-- INTRO -->
+        <h1 class="auth-brand-title">DIVINE SOUL</h1>
+        <p class="auth-brand-desc">A platform to explore great personalities, their biographies, and their books.</p>
         <div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>
+        <h2 class="auth-title" data-en="Gateway to Sacred Knowledge" data-hi="दिव्य ज्ञान का द्वार">Gateway to Sacred Knowledge</h2>
+        <p class="auth-subtitle" data-en="Sign in to begin your journey" data-hi="अपनी यात्रा शुरू करें">Sign in to begin your journey</p>
 
         <div class="auth-tabs">
           <button id="tab-signup" class="auth-tab active" onclick="switchMode('signup')" data-en="SIGN UP" data-hi="पंजीकरण">SIGN UP</button>
@@ -51,24 +92,19 @@
           <div class="field-group" id="field-name">
             <label class="field-label" data-en="FULL NAME" data-hi="नाम">FULL NAME</label>
             <input type="text" id="inp-name" class="field-input" placeholder="Enter your full name"
-              data-en-ph="Enter your full name" data-hi-ph="अपना नाम लिखें"
-              autocomplete="name" />
+              data-en-ph="Enter your full name" data-hi-ph="अपना नाम लिखें" autocomplete="name" />
           </div>
           <div class="field-group">
             <label class="field-label" data-en="EMAIL ADDRESS" data-hi="ईमेल पता">EMAIL ADDRESS</label>
             <input type="email" id="inp-email" class="field-input" placeholder="Enter your email"
-              data-en-ph="Enter your email" data-hi-ph="ईमेल दर्ज करें"
-              autocomplete="email" />
+              data-en-ph="Enter your email" data-hi-ph="ईमेल दर्ज करें" autocomplete="email" />
           </div>
           <div class="field-group">
             <label class="field-label" data-en="PASSWORD" data-hi="पासवर्ड">PASSWORD</label>
             <input type="password" id="inp-pass" class="field-input" placeholder="Enter your password"
-              data-en-ph="Enter your password" data-hi-ph="पासवर्ड दर्ज करें"
-              autocomplete="current-password" />
+              data-en-ph="Enter your password" data-hi-ph="पासवर्ड दर्ज करें" autocomplete="current-password" />
           </div>
-
           <div id="auth-error" class="auth-error" style="display:none;"></div>
-
           <button class="submit-btn" onclick="handleAuth()">
             <span id="btn-text"
               data-en-signup="🌸 Join the Sangha" data-hi-signup="🌸 शामिल हों"
@@ -84,17 +120,23 @@
     </main>
   </div>
 
-  <!-- DASHBOARD PAGE -->
+  <!-- ══════════════════ DASHBOARD PAGE ══════════════════ -->
   <div id="page-dashboard" class="page">
     <div class="mandala mandala-top-right"></div>
     <div class="mandala mandala-bottom-left"></div>
 
     <header class="dash-header">
       <div class="dash-header-inner">
-        <div class="logo logo-light">
-           <img src="pfp.jpg" alt="Logo" class="logo-pfp" />
-          🪷 <span>Divine Soul</span></div>
+
+        <!-- LEFT: logo clicks open slide panel -->
+        <div class="logo logo-light logo-clickable" onclick="openSlidePanel()">
+          <img src="pfp.jpg" alt="Logo" class="logo-pfp" id="dash-logo-pfp" />
+          <span>Divine Soul</span>
+        </div>
+
+        <!-- RIGHT: Translate | Settings | Profile avatar -->
         <div class="dash-header-right">
+
           <!-- Translate -->
           <div class="lang-wrap" id="dash-lang-wrap">
             <button class="lang-btn dash-lang-btn" onclick="toggleLangMenu('dash-lang-wrap')">
@@ -106,14 +148,17 @@
               <div class="lang-option" onclick="selectLang('hi','dash-lang-wrap')">🕉 हिन्दी</div>
             </div>
           </div>
+
           <!-- Settings -->
           <div class="dash-dropdown-wrap" id="settings-wrap">
-            <button class="dash-icon-btn" onclick="toggleDashDropdown('settings-wrap')" title="Settings">⚙ <span class="dash-btn-label">Settings</span></button>
+            <button class="dash-icon-btn" onclick="toggleDashDropdown('settings-wrap')">
+              ⚙ <span class="dash-btn-label">Settings</span>
+            </button>
             <div class="dash-dropdown" id="settings-menu">
               <div class="dash-dropdown-title">Settings</div>
               <div class="dash-toggle-row" onclick="toggleDarkMode()">
                 <span>Dark Mode</span>
-                <div class="dash-toggle" id="darkModeToggle"><div class="dash-toggle-knob"></div></div>
+                <div class="dash-toggle" id="darkModeToggleDash"><div class="dash-toggle-knob"></div></div>
               </div>
               <div class="dash-toggle-row" onclick="toggleCompactCards()">
                 <span>Compact Cards</span>
@@ -123,14 +168,42 @@
                 <span>Show Quote</span>
                 <div class="dash-toggle active" id="quoteToggle"><div class="dash-toggle-knob"></div></div>
               </div>
+              <div class="dash-toggle-row" onclick="toggleFontSize()">
+                <span>Large Font</span>
+                <div class="dash-toggle" id="fontToggleDash"><div class="dash-toggle-knob"></div></div>
+              </div>
+              <div class="dash-toggle-row" onclick="resetPreferences()">
+                <span>Reset Preferences</span>
+                <span class="reset-icon">↺</span>
+              </div>
             </div>
           </div>
-          <!-- Profile -->
+
+          <!-- Profile AVATAR — circular, rightmost -->
           <div class="dash-dropdown-wrap" id="profile-wrap">
-            <button class="dash-icon-btn" onclick="toggleDashDropdown('profile-wrap')" title="Profile">👤 <span class="dash-btn-label" id="profile-btn-name">Profile</span></button>
+            <button class="profile-avatar-btn" onclick="toggleDashDropdown('profile-wrap')" id="profile-avatar-btn">
+              <img src="pfp.jpg" alt="Profile" class="profile-avatar-img" id="profile-avatar-img"
+                onerror="this.style.display='none';document.getElementById('profile-avatar-initials').style.display='flex';" />
+              <span class="profile-avatar-initials" id="profile-avatar-initials">?</span>
+            </button>
+
             <div class="dash-dropdown dash-dropdown-wide" id="profile-menu">
-              <div class="dash-dropdown-title">My Profile</div>
-              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-account')">👤 Account Settings <span class="acc-caret">›</span></div>
+              <!-- Profile header inside dropdown -->
+              <div class="profile-drop-header">
+                <div class="profile-drop-avatar-wrap">
+                  <img src="pfp.jpg" alt="" class="profile-drop-avatar-img" id="profile-drop-img"
+                    onerror="this.style.display='none';document.getElementById('profile-drop-initials').style.display='flex';" />
+                  <span class="profile-drop-initials" id="profile-drop-initials">?</span>
+                </div>
+                <div class="profile-drop-info">
+                  <div class="profile-drop-name" id="profile-drop-name">Seeker</div>
+                  <div class="profile-drop-sub">Divine Soul Member</div>
+                </div>
+              </div>
+
+              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-account')">
+                👤 Account Settings <span class="acc-caret">›</span>
+              </div>
               <div class="dash-accordion-body" id="acc-account">
                 <div class="dash-field">
                   <label>Display Name</label>
@@ -143,20 +216,31 @@
                   <button class="dash-small-btn" onclick="savePfpUrl()">Save</button>
                 </div>
               </div>
-              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-bookmarks')">🔖 My Bookmarks <span class="acc-caret">›</span></div>
+
+              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-bookmarks')">
+                🔖 My Bookmarks <span class="acc-caret">›</span>
+              </div>
               <div class="dash-accordion-body" id="acc-bookmarks">
                 <div id="bookmarks-list"><p class="dash-empty-msg">No saved books yet.</p></div>
               </div>
+
+              <div class="profile-signout-row" onclick="logout()">🚪 Sign Out</div>
             </div>
           </div>
-          <button class="signout-btn" onclick="logout()" data-en="SIGN OUT" data-hi="साइन आउट">SIGN OUT</button>
+
         </div>
       </div>
     </header>
 
+    <!-- HERO: intro + welcome -->
     <section class="dash-hero">
+      <div class="dash-hero-intro">
+        <h1 class="dash-brand-title">DIVINE SOUL</h1>
+        <p class="dash-brand-desc">A platform to explore great personalities, their biographies, and their books.</p>
+      </div>
+      <div class="om-divider dash-hero-divider"><span></span><span class="om-icon">✦</span><span></span></div>
       <p class="welcome-small" data-en="Welcome to the Sangha" data-hi="संघ में आपका स्वागत है">Welcome to the Sangha</p>
-      <h1 class="welcome-name"> <span id="welcome-name-text">Seeker</span> 🙏</h1>
+      <h2 class="welcome-name"><span id="welcome-name-text">Seeker</span> 🙏</h2>
       <div class="quote-strip">
         <p class="quote-text" id="dash-quote">"In the silence of the heart, God speaks."</p>
       </div>
@@ -179,14 +263,14 @@
     </footer>
   </div>
 
-  <!-- DETAIL PAGE -->
+  <!-- ══════════════════ DETAIL PAGE ══════════════════ -->
   <div id="page-detail" class="page">
     <div class="mandala mandala-top-right"></div>
 
     <header class="dash-header">
       <div class="dash-header-inner">
         <button class="back-btn" onclick="showDashboard()">← <span data-en="BACK" data-hi="वापस">BACK</span></button>
-        <div class="logo logo-light" style="font-size:16px;">🕉 Divine Soul</div>
+        <div class="logo logo-light logo-clickable" style="font-size:16px;" onclick="openSlidePanel()">🕉 Divine Soul</div>
         <div style="width:80px;"></div>
       </div>
     </header>

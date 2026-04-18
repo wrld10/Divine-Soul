@@ -1,11 +1,7 @@
 /* ═══════════════════════════════════════════
-   DIVINE SOUL — script.js  (Full-Stack Edition)
-   Backend: http://localhost:5000/api
+   DIVINE SOUL — script.js
    ═══════════════════════════════════════════ */
 
-/* ── API BASE URL ───────────────────────────
-   Change this to your deployed backend URL when going live.
-   e.g. "https://your-backend.onrender.com/api"            */
 var API_BASE = "https://divine-soul.vercel.app/api";
 
 /* ── PERSONALITIES DATA ─────────────────── */
@@ -80,17 +76,45 @@ var QUOTES = [
   "Devotion is not a practice; it is a way of being."
 ];
 
+/* ── BOOKS DATA ─────────────────────────── */
+var BOOKS = {
+  1: [
+    { title: "Hit Chaurasi",          author: "Hariray",             emoji: "📿", genre: "Bhakti Scripture" },
+    { title: "Radhastami Mahatmya",   author: "Tradition",           emoji: "🌸", genre: "Devotion"         },
+    { title: "Seva Kunja Ke Phool",   author: "Premanand Maharaj",   emoji: "🪷", genre: "Kirtan"           },
+    { title: "Radha Madhuri",         author: "Premanand Maharaj",   emoji: "💛", genre: "Bhakti"           },
+    { title: "Vrindavan Leela",       author: "Premanand Maharaj",   emoji: "🌿", genre: "Pastimes"         },
+    { title: "Prema Bhakti Chandrika",author: "Narottama Das",       emoji: "🌙", genre: "Vaishnava"        }
+  ],
+  2: [
+    { title: "Vaishnava Seva Rahasya",author: "Vinod Baba", emoji: "🔆", genre: "Seva"      },
+    { title: "Bhakti Ki Seedhi",      author: "Vinod Baba", emoji: "🪜", genre: "Devotion"  },
+    { title: "Priya Kunj Amrit Vachan",author:"Vinod Baba", emoji: "📖", genre: "Teachings" },
+    { title: "Sharanagati Darshan",   author: "Vinod Baba", emoji: "🙏", genre: "Surrender" }
+  ],
+  3: [
+    { title: "Pada Yatra",             author: "Lokanath Swami",          emoji: "👣", genre: "Pilgrimage" },
+    { title: "Vraj Mandal Parikrama",  author: "Lokanath Swami",          emoji: "🏔️", genre: "Yatra"     },
+    { title: "Prabhupada My Strength", author: "Lokanath Swami",          emoji: "✨", genre: "Biography"  },
+    { title: "Chant & Be Happy",       author: "Prabhupada (fwd by LS)", emoji: "🎵", genre: "Japa"       },
+    { title: "Walking with Krishna",   author: "Lokanath Swami",          emoji: "🌿", genre: "Devotion"   },
+    { title: "Bhakti Rahasya",         author: "Lokanath Swami",          emoji: "📜", genre: "Bhakti"     }
+  ]
+};
+
 /* ── STATE ──────────────────────────────── */
 var currentMode   = "signup";
 var currentLang   = "en";
-var currentUser   = null;   // { id, username, email }
+var currentUser   = null;
 var currentPerson = null;
+var bookmarks     = loadBookmarks();
 
 /* ════════════════════════════════════════
-   SECTION 1 — INIT
+   INIT
    ════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", function () {
-  // Restore session from localStorage (token + user object)
+  applyStoredPrefs();
+
   var token = localStorage.getItem("divine_token");
   var user  = safeJSON("divine_user");
 
@@ -102,90 +126,85 @@ document.addEventListener("DOMContentLoaded", function () {
     showPage("auth");
   }
 
-  // Rotate random quote on auth page
   var q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   document.getElementById("auth-quote").textContent = "\u201c" + q + "\u201d";
+
+  // Close all dropdowns / slide panel on outside click
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest(".lang-wrap")) {
+      document.querySelectorAll(".lang-wrap").forEach(function(w){ w.classList.remove("open"); });
+    }
+    if (!e.target.closest(".dash-dropdown-wrap")) {
+      document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
+    }
+  });
 });
 
 /* ════════════════════════════════════════
-   SECTION 2 — PAGE ROUTING
+   PAGE ROUTING
    ════════════════════════════════════════ */
 function showPage(name) {
-  var pages = document.querySelectorAll(".page");
-  for (var i = 0; i < pages.length; i++) {
-    pages[i].classList.remove("active");
-  }
+  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
   var page = document.getElementById("page-" + name);
-  if (page) {
-    page.classList.add("active");
-    window.scrollTo(0, 0);
-  }
+  if (page) { page.classList.add("active"); window.scrollTo(0, 0); }
 }
 
 /* ════════════════════════════════════════
-   SECTION 3 — LANGUAGE
+   SLIDE PANEL (left drawer)
+   ════════════════════════════════════════ */
+function openSlidePanel() {
+  document.getElementById("slidePanel").classList.add("open");
+  document.getElementById("slideOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeSlidePanel() {
+  document.getElementById("slidePanel").classList.remove("open");
+  document.getElementById("slideOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+/* ════════════════════════════════════════
+   LANGUAGE
    ════════════════════════════════════════ */
 function toggleLangMenu(wrapId) {
   var wrap = document.getElementById(wrapId);
   var isOpen = wrap.classList.contains("open");
-  var all = document.querySelectorAll(".lang-wrap");
-  for (var i = 0; i < all.length; i++) all[i].classList.remove("open");
+  document.querySelectorAll(".lang-wrap").forEach(function(w){ w.classList.remove("open"); });
   if (!isOpen) wrap.classList.add("open");
 }
 
 function selectLang(lang, wrapId) {
-  var wrap  = document.getElementById(wrapId);
-  var label = lang === "en" ? "文ᴬ English" : "🕉 हिन्दी";
-  wrap.querySelector(".lang-btn-text").textContent = label;
+  var wrap = document.getElementById(wrapId);
+  wrap.querySelector(".lang-btn-text").textContent = lang === "en" ? "文ᴬ English" : "🕉 हिन्दी";
   wrap.classList.remove("open");
   setLang(lang);
 }
 
-document.addEventListener("click", function (e) {
-  if (!e.target.closest(".lang-wrap")) {
-    var all = document.querySelectorAll(".lang-wrap");
-    for (var i = 0; i < all.length; i++) all[i].classList.remove("open");
-  }
-});
-
 function setLang(lang) {
   currentLang = lang;
-
-  var wraps = document.querySelectorAll(".lang-wrap");
   var label = lang === "en" ? "文ᴬ English" : "🕉 हिन्दी";
-  for (var i = 0; i < wraps.length; i++) {
-    var bt = wraps[i].querySelector(".lang-btn-text");
+  document.querySelectorAll(".lang-wrap").forEach(function(w){
+    var bt = w.querySelector(".lang-btn-text");
     if (bt) bt.textContent = label;
-  }
-
-  var els = document.querySelectorAll("[data-en]");
-  for (var i = 0; i < els.length; i++) {
-    var el = els[i];
+  });
+  document.querySelectorAll("[data-en]").forEach(function(el){
     el.textContent = el.getAttribute("data-" + lang) || el.getAttribute("data-en");
-  }
-
-  var phs = document.querySelectorAll("[data-en-ph]");
-  for (var i = 0; i < phs.length; i++) {
-    var el = phs[i];
+  });
+  document.querySelectorAll("[data-en-ph]").forEach(function(el){
     el.placeholder = el.getAttribute("data-" + lang + "-ph") || el.getAttribute("data-en-ph");
-  }
-
+  });
   updateSubmitBtn();
 }
 
 /* ════════════════════════════════════════
-   SECTION 4 — AUTH MODE TOGGLE
+   AUTH MODE
    ════════════════════════════════════════ */
 function switchMode(mode) {
   if (mode === currentMode) return;
   currentMode = mode;
-
   document.getElementById("tab-signup").classList.toggle("active", mode === "signup");
   document.getElementById("tab-login").classList.toggle("active",  mode === "login");
-
-  var nameField = document.getElementById("field-name");
-  nameField.style.display = (mode === "signup") ? "block" : "none";
-
+  document.getElementById("field-name").style.display = mode === "signup" ? "block" : "none";
   document.getElementById("inp-name").value  = "";
   document.getElementById("inp-email").value = "";
   document.getElementById("inp-pass").value  = "";
@@ -200,90 +219,56 @@ function updateSubmitBtn() {
 }
 
 /* ════════════════════════════════════════
-   SECTION 5 — AUTH SUBMIT (connects to backend)
+   AUTH SUBMIT
    ════════════════════════════════════════ */
 function handleAuth() {
   hideError();
-
   var name  = document.getElementById("inp-name").value.trim();
   var email = document.getElementById("inp-email").value.trim();
   var pass  = document.getElementById("inp-pass").value.trim();
 
-  // ── Client-side validation (same as before) ──────────────────
-  if (currentMode === "signup" && !name) {
-    return showError("Please enter your full name.");
-  }
-  if (!email || email.indexOf("@") === -1) {
-    return showError("Please enter a valid email address.");
-  }
-  if (!pass || pass.length < 6) {
-    return showError("Password must be at least 6 characters.");
-  }
+  if (currentMode === "signup" && !name)      return showError("Please enter your full name.");
+  if (!email || email.indexOf("@") === -1)    return showError("Please enter a valid email address.");
+  if (!pass || pass.length < 6)               return showError("Password must be at least 6 characters.");
 
-  // ── Disable button and show loading state ────────────────────
-  var btn     = document.querySelector(".submit-btn");
+  var btn = document.querySelector(".submit-btn");
   var btnText = document.getElementById("btn-text");
   btn.disabled = true;
   btnText.textContent = "⏳ Please wait…";
 
-  // ── Choose endpoint based on mode ────────────────────────────
-  var endpoint = currentMode === "signup"
-    ? API_BASE + "/auth/signup"
-    : API_BASE + "/auth/login";
-
+  var endpoint = currentMode === "signup" ? API_BASE + "/auth/signup" : API_BASE + "/auth/login";
   var body = currentMode === "signup"
     ? { username: name, email: email, password: pass }
     : { email: email, password: pass };
 
-  // ── Fetch API call ───────────────────────────────────────────
-  fetch(endpoint, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(body),
-  })
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      btn.disabled = false;
-      updateSubmitBtn();
-
-      if (!data.success) {
-        // Show the error message from the server
-        return showError(data.message || "Something went wrong. Please try again.");
-      }
-
-      // ── SUCCESS: store token + user, then go to dashboard ────
-      localStorage.setItem("divine_token",  data.token);
-      localStorage.setItem("divine_user",   JSON.stringify(data.user));
+  fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      btn.disabled = false; updateSubmitBtn();
+      if (!data.success) return showError(data.message || "Something went wrong. Please try again.");
+      localStorage.setItem("divine_token", data.token);
+      localStorage.setItem("divine_user",  JSON.stringify(data.user));
       currentUser = data.user;
-
-      // Clear form fields
       document.getElementById("inp-name").value  = "";
       document.getElementById("inp-email").value = "";
       document.getElementById("inp-pass").value  = "";
-
       renderDashboard();
       showPage("dashboard");
     })
-    .catch(function (err) {
-      btn.disabled = false;
-      updateSubmitBtn();
-      // Network error (server not running, etc.)
+    .catch(function(err){
+      btn.disabled = false; updateSubmitBtn();
       showError("Cannot connect to server. Please make sure the backend is running on port 5000.");
       console.error("Auth fetch error:", err);
     });
 }
 
 /* ════════════════════════════════════════
-   SECTION 6 — LOGOUT
+   LOGOUT
    ════════════════════════════════════════ */
 function logout() {
-  // Clear all stored session data
   localStorage.removeItem("divine_token");
   localStorage.removeItem("divine_user");
-  currentUser   = null;
-  currentPerson = null;
-
-  // Reset form to signup state
+  currentUser = null; currentPerson = null;
   currentMode = "signup";
   document.getElementById("tab-signup").classList.add("active");
   document.getElementById("tab-login").classList.remove("active");
@@ -291,19 +276,39 @@ function logout() {
   document.getElementById("inp-name").value  = "";
   document.getElementById("inp-email").value = "";
   document.getElementById("inp-pass").value  = "";
-  hideError();
-  updateSubmitBtn();
-
+  hideError(); updateSubmitBtn();
+  // close all dropdowns
+  document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
   showPage("auth");
 }
 
 /* ════════════════════════════════════════
-   SECTION 7 — DASHBOARD
+   DASHBOARD
    ════════════════════════════════════════ */
 function renderDashboard() {
   if (!currentUser) return;
 
-  document.getElementById("welcome-name-text").textContent = currentUser.username;
+  var name = currentUser.username || "Seeker";
+  document.getElementById("welcome-name-text").textContent = name;
+
+  // Profile avatar & dropdown name
+  var initLetter = name.charAt(0).toUpperCase();
+  var avatarInit = document.getElementById("profile-avatar-initials");
+  var dropInit   = document.getElementById("profile-drop-initials");
+  var dropName   = document.getElementById("profile-drop-name");
+  if (avatarInit) avatarInit.textContent = initLetter;
+  if (dropInit)   dropInit.textContent   = initLetter;
+  if (dropName)   dropName.textContent   = name;
+
+  // If user set a custom pfp
+  if (currentUser.pfp) {
+    var avatarImg = document.getElementById("profile-avatar-img");
+    var dropImg   = document.getElementById("profile-drop-img");
+    var logoImg   = document.getElementById("dash-logo-pfp");
+    if (avatarImg) avatarImg.src = currentUser.pfp;
+    if (dropImg)   dropImg.src   = currentUser.pfp;
+    if (logoImg)   logoImg.src   = currentUser.pfp;
+  }
 
   var q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   document.getElementById("dash-quote").textContent = "\u201c" + q + "\u201d";
@@ -313,6 +318,9 @@ function renderDashboard() {
   for (var i = 0; i < PERSONALITIES.length; i++) {
     grid.appendChild(buildCard(PERSONALITIES[i], i));
   }
+
+  renderBookmarksList();
+  applyStoredPrefs();
 }
 
 function showDashboard() {
@@ -321,7 +329,7 @@ function showDashboard() {
 }
 
 /* ════════════════════════════════════════
-   SECTION 8 — BUILD CARD
+   BUILD CARD
    ════════════════════════════════════════ */
 function buildCard(p, idx) {
   var card = document.createElement("div");
@@ -329,24 +337,19 @@ function buildCard(p, idx) {
   card.setAttribute("role", "button");
   card.setAttribute("tabindex", "0");
 
-  var imgSrc = p.image;
-  var imgFb  = p.fallback;
-
   card.innerHTML =
     '<div class="card-image-wrap">' +
-      '<img class="card-img" src="' + imgSrc + '" alt="' + p.name + '" ' +
-           'onerror="this.onerror=null;this.src=\'' + imgFb + '\';" />' +
+      '<img class="card-img" src="' + p.image + '" alt="' + p.name + '" ' +
+           'onerror="this.onerror=null;this.src=\'' + p.fallback + '\';" />' +
       '<div class="card-image-overlay"></div>' +
-      '<div class="card-corner tl"></div>' +
-      '<div class="card-corner tr"></div>' +
-      '<div class="card-corner bl"></div>' +
-      '<div class="card-corner br"></div>' +
+      '<div class="card-corner tl"></div><div class="card-corner tr"></div>' +
+      '<div class="card-corner bl"></div><div class="card-corner br"></div>' +
     '</div>' +
     '<div class="card-body">' +
-      '<h3 class="card-name">' + p.name  + '</h3>' +
-      '<p class="card-title">' + p.title + '</p>' +
+      '<h3 class="card-name">'  + p.name  + '</h3>' +
+      '<p class="card-title">'  + p.title + '</p>' +
       '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
-      '<p class="card-desc">'  + p.shortDesc + '</p>' +
+      '<p class="card-desc">'   + p.shortDesc + '</p>' +
       '<p class="card-read-more">✦ READ FULL BIOGRAPHY ✦</p>' +
     '</div>';
 
@@ -356,18 +359,15 @@ function buildCard(p, idx) {
 }
 
 /* ════════════════════════════════════════
-   SECTION 9 — DETAIL PAGE
+   DETAIL PAGE
    ════════════════════════════════════════ */
 function showDetail(person) {
   currentPerson = person;
 
-  var imgSrc = person.image;
-  var imgFb  = person.fallback;
-
   var metaHTML =
     metaRow("TRADITION", person.tradition) +
-    metaRow("GURU",      person.guru) +
-    metaRow("BORN",      person.born) +
+    metaRow("GURU",      person.guru)      +
+    metaRow("BORN",      person.born)      +
     metaRow("LOCATION",  person.location);
 
   var bioHTML = "";
@@ -378,12 +378,12 @@ function showDetail(person) {
   document.getElementById("detail-content").innerHTML =
     '<div class="detail-hero">' +
       '<div class="detail-image-frame">' +
-        '<img src="' + imgSrc + '" alt="' + person.name + '" ' +
-             'onerror="this.onerror=null;this.src=\'' + imgFb + '\';" />' +
+        '<img src="' + person.image + '" alt="' + person.name + '" ' +
+             'onerror="this.onerror=null;this.src=\'' + person.fallback + '\';" />' +
       '</div>' +
       '<div class="detail-info">' +
-        '<h1 class="detail-name">'       + person.name  + '</h1>' +
-        '<p class="detail-title-text">'  + person.title + '</p>' +
+        '<h1 class="detail-name">'      + person.name  + '</h1>' +
+        '<p class="detail-title-text">' + person.title + '</p>' +
         '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
         '<div style="margin-top:18px;">' + metaHTML + '</div>' +
       '</div>' +
@@ -397,6 +397,8 @@ function showDetail(person) {
     '<h3 class="bio-section-title" style="margin-top:22px;">📖 LIFE &amp; TEACHINGS</h3>' +
     '<div class="bio-text">' + bioHTML + '</div>' +
 
+    buildBooksSection(person) +
+
     '<div class="comment-section" id="comment-section-' + person.id + '">' +
       '<h3 class="comment-heading">💬 Devotee Reflections</h3>' +
       '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
@@ -408,225 +410,50 @@ function showDetail(person) {
         '</button>' +
       '</div>' +
       '<div class="comment-list" id="comment-list-' + person.id + '">' +
-        '<p class="comment-empty">Loading reflections…</p>' +
+        '<p class="comment-empty">Loading reflections\u2026</p>' +
       '</div>' +
     '</div>';
 
-  // Load comments from the backend
   fetchComments(person.id);
   showPage("detail");
 }
 
 function metaRow(label, value) {
-  return '<div class="meta-row">' +
-           '<span class="meta-label">' + label + '</span>' +
-           '<span class="meta-value">' + value + '</span>' +
-         '</div>';
+  return '<div class="meta-row"><span class="meta-label">' + label + '</span><span class="meta-value">' + value + '</span></div>';
 }
 
 /* ════════════════════════════════════════
-   SECTION 10 — COMMENTS (backend-powered)
+   BOOKS
    ════════════════════════════════════════ */
+function buildBooksSection(person) {
+  var books = BOOKS[person.id];
+  if (!books || !books.length) return "";
 
-/**
- * fetchComments — GET /api/comments?personalityId=<pid>
- * Public endpoint: no token required.
- * Renders whatever the server returns.
- */
-function fetchComments(pid) {
-  var list = document.getElementById("comment-list-" + pid);
-  if (!list) return;
+  var cards = books.map(function(book) {
+    var id    = person.id + "::" + book.title;
+    var saved = bookmarks.some(function(b){ return b.id === id; });
+    return '<div class="book-card">' +
+      '<div class="book-cover-emoji">' + book.emoji + '</div>' +
+      '<div class="book-info">' +
+        '<div class="book-title">'  + escapeHTML(book.title)  + '</div>' +
+        '<div class="book-author">' + escapeHTML(book.author) + '</div>' +
+        '<button class="book-save-btn' + (saved ? ' saved' : '') + '" ' +
+          'onclick="handleBookSave(' + person.id + ',\'' + book.title.replace(/'/g,"\\'") + '\',\'' + book.author.replace(/'/g,"\\'") + '\',\'' + book.emoji + '\',this)">' +
+          (saved ? '🔖 SAVED' : '✦ SAVE') +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 
-  fetch(API_BASE + "/comments?personalityId=" + pid)
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      if (!data.success) {
-        list.innerHTML = '<p class="comment-empty">Could not load reflections.</p>';
-        return;
-      }
-      renderComments(pid, data.comments);
-    })
-    .catch(function (err) {
-      console.error("fetchComments error:", err);
-      if (list) {
-        list.innerHTML = '<p class="comment-empty">Server offline — reflections unavailable.</p>';
-      }
-    });
+  return '<div class="books-section">' +
+    '<h3 class="books-section-title">📚 BOOKS &amp; TEACHINGS</h3>' +
+    '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
+    '<div class="books-row" style="margin-top:16px;">' + cards + '</div>' +
+  '</div>';
 }
 
-/**
- * submitComment — POST /api/comments
- * Protected: sends JWT in Authorization header.
- */
-function submitComment(pid) {
-  var input = document.getElementById("comment-input-" + pid);
-  var text  = input ? input.value.trim() : "";
-  if (!text) return;
-
-  // Make sure the user is logged in
-  var token = localStorage.getItem("divine_token");
-  if (!token) {
-    alert("Please log in to share a reflection.");
-    return;
-  }
-
-  // Disable the submit button while the request is in flight
-  var btn = document.getElementById("comment-btn-" + pid);
-  if (btn) { btn.disabled = true; btn.textContent = "⏳ Submitting…"; }
-
-  fetch(API_BASE + "/comments", {
-    method:  "POST",
-    headers: {
-      "Content-Type":  "application/json",
-      "Authorization": "Bearer " + token,   // JWT authentication
-    },
-    body: JSON.stringify({
-      personalityId: pid,
-      commentText:   text,
-    }),
-  })
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      if (btn) { btn.disabled = false; btn.textContent = "🙏 OFFER REFLECTION"; }
-
-      if (!data.success) {
-        alert(data.message || "Could not post reflection. Please try again.");
-        return;
-      }
-
-      // Clear the textarea and refresh the comment list
-      if (input) input.value = "";
-      fetchComments(pid);
-    })
-    .catch(function (err) {
-      if (btn) { btn.disabled = false; btn.textContent = "🙏 OFFER REFLECTION"; }
-      console.error("submitComment error:", err);
-      alert("Cannot connect to server. Please make sure the backend is running.");
-    });
-}
-
-/**
- * renderComments — takes an array of comment objects from the API
- * and renders them into the comment list element.
- */
-function renderComments(pid, comments) {
-  var list = document.getElementById("comment-list-" + pid);
-  if (!list) return;
-
-  if (!comments || comments.length === 0) {
-    list.innerHTML = '<p class="comment-empty">Be the first to offer a reflection.</p>';
-    return;
-  }
-
-  var html = "";
-  for (var i = 0; i < comments.length; i++) {
-    var c = comments[i];
-
-    // Format the timestamp nicely
-    var timeStr = "";
-    if (c.createdAt) {
-      var d = new Date(c.createdAt);
-      timeStr = d.toLocaleString("en-IN", {
-        day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit"
-      });
-    }
-
-    html +=
-      '<div class="comment-item">' +
-        '<div class="comment-user">🪷 ' + escapeHTML(c.username)    + '</div>' +
-        '<p class="comment-body">'       + escapeHTML(c.commentText) + '</p>' +
-        '<div class="comment-time">'     + timeStr                   + '</div>' +
-      '</div>';
-  }
-
-  list.innerHTML = html;
-}
-
-/* ════════════════════════════════════════
-   SECTION 11 — HELPERS
-   ════════════════════════════════════════ */
-
-/** Safely parse JSON from localStorage without throwing. */
-function safeJSON(key) {
-  try { return JSON.parse(localStorage.getItem(key)); }
-  catch (e) { return null; }
-}
-
-/** Escape HTML to prevent XSS in comment display. */
-function escapeHTML(str) {
-  var d = document.createElement("div");
-  d.appendChild(document.createTextNode(String(str || "")));
-  return d.innerHTML;
-}
-
-/** Show the red error box on the auth page. */
-function showError(msg) {
-  var el = document.getElementById("auth-error");
-  if (el) { el.textContent = msg; el.style.display = "block"; }
-}
-
-/** Hide the error box. */
-function hideError() {
-  var el = document.getElementById("auth-error");
-  if (el) el.style.display = "none";
-}
-
-/* ── KEYBOARD: Enter = submit auth form ─── */
-document.addEventListener("keydown", function (e) {
-  if (e.key !== "Enter") return;
-  var authPage = document.getElementById("page-auth");
-  if (authPage && authPage.classList.contains("active")) {
-    handleAuth();
-  }
-});
-
-/* ════════════════════════════════════════
-   ADDED — Settings, Profile, Books, Bookmarks, Dark Mode, Toast
-   ════════════════════════════════════════ */
-
-/* Fix name */
-// Vinod Baba → Vinod Baba already corrected in PERSONALITIES data above
-
-/* ── BOOKS DATA per personality ─────────── */
-var BOOKS = {
-  1: [
-    { title: "Hit Chaurasi", author: "Hariray", emoji: "📿", genre: "Bhakti Scripture" },
-    { title: "Radhastami Mahatmya", author: "Tradition", emoji: "🌸", genre: "Devotion" },
-    { title: "Seva Kunja Ke Phool", author: "Premanand Maharaj", emoji: "🪷", genre: "Kirtan" },
-    { title: "Radha Madhuri", author: "Premanand Maharaj", emoji: "💛", genre: "Bhakti" },
-    { title: "Vrindavan Leela", author: "Premanand Maharaj", emoji: "🌿", genre: "Pastimes" },
-    { title: "Prema Bhakti Chandrika", author: "Narottama Das", emoji: "🌙", genre: "Vaishnava" }
-  ],
-  2: [
-    { title: "Vaishnava Seva Rahasya", author: "Vinod Baba", emoji: "🔆", genre: "Seva" },
-    { title: "Bhakti Ki Seedhi", author: "Vinod Baba", emoji: "🪜", genre: "Devotion" },
-    { title: "Priya Kunj Amrit Vachan", author: "Vinod Baba", emoji: "📖", genre: "Teachings" },
-    { title: "Sharanagati Darshan", author: "Vinod Baba", emoji: "🙏", genre: "Surrender" }
-  ],
-  3: [
-    { title: "Pada Yatra", author: "Lokanath Swami", emoji: "👣", genre: "Pilgrimage" },
-    { title: "Vraj Mandal Parikrama", author: "Lokanath Swami", emoji: "🏔️", genre: "Yatra" },
-    { title: "Prabhupada My Strength", author: "Lokanath Swami", emoji: "✨", genre: "Biography" },
-    { title: "Chant & Be Happy", author: "Prabhupada (fwd by LS)", emoji: "🎵", genre: "Japa" },
-    { title: "Walking with Krishna", author: "Lokanath Swami", emoji: "🌿", genre: "Devotion" },
-    { title: "Bhakti Rahasya", author: "Lokanath Swami", emoji: "📜", genre: "Bhakti" }
-  ]
-};
-
-/* ── BOOKMARKS ────────────────────────── */
-var bookmarks = loadBookmarks();
-
-function loadBookmarks() {
-  try { return JSON.parse(localStorage.getItem("ds_bookmarks") || "[]"); }
-  catch(e) { return []; }
-}
-function saveBookmarks() {
-  localStorage.setItem("ds_bookmarks", JSON.stringify(bookmarks));
-}
-
-function toggleBookmark(pid, title, author, emoji, btnEl) {
-  var id = pid + "::" + title;
+function handleBookSave(pid, title, author, emoji, btnEl) {
+  var id  = pid + "::" + title;
   var idx = bookmarks.findIndex(function(b){ return b.id === id; });
   if (idx > -1) {
     bookmarks.splice(idx, 1);
@@ -643,12 +470,21 @@ function toggleBookmark(pid, title, author, emoji, btnEl) {
   renderBookmarksList();
 }
 
+/* ════════════════════════════════════════
+   BOOKMARKS
+   ════════════════════════════════════════ */
+function loadBookmarks() {
+  try { return JSON.parse(localStorage.getItem("ds_bookmarks") || "[]"); }
+  catch(e) { return []; }
+}
+function saveBookmarks() {
+  localStorage.setItem("ds_bookmarks", JSON.stringify(bookmarks));
+}
 function removeBookmark(id) {
   bookmarks = bookmarks.filter(function(b){ return b.id !== id; });
   saveBookmarks();
   renderBookmarksList();
 }
-
 function renderBookmarksList() {
   var el = document.getElementById("bookmarks-list");
   if (!el) return;
@@ -659,154 +495,216 @@ function renderBookmarksList() {
   el.innerHTML = bookmarks.map(function(b) {
     return '<div class="bookmark-entry">' +
       '<span class="bookmark-emoji">' + b.emoji + '</span>' +
-      '<div class="bookmark-info"><strong>' + escapeHTML(b.title) + '</strong><span>' + escapeHTML(b.author) + '</span></div>' +
+      '<div class="bookmark-info">' +
+        '<strong>' + escapeHTML(b.title)  + '</strong>' +
+        '<span>'   + escapeHTML(b.author) + '</span>' +
+      '</div>' +
       '<button class="bookmark-remove" onclick="removeBookmark(\'' + b.id.replace(/'/g,"\\'") + '\')">✕</button>' +
     '</div>';
   }).join('');
 }
 
-/* ── BOOKS RENDERER (called from showDetail) ── */
-function buildBooksSection(person) {
-  var books = BOOKS[person.id];
-  if (!books || !books.length) return '';
+/* ════════════════════════════════════════
+   COMMENTS
+   ════════════════════════════════════════ */
+function fetchComments(pid) {
+  var list = document.getElementById("comment-list-" + pid);
+  if (!list) return;
+  fetch(API_BASE + "/comments?personalityId=" + pid)
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.success) { list.innerHTML = '<p class="comment-empty">Could not load reflections.</p>'; return; }
+      renderComments(pid, data.comments);
+    })
+    .catch(function(){
+      if (list) list.innerHTML = '<p class="comment-empty">Server offline — reflections unavailable.</p>';
+    });
+}
 
-  var cards = books.map(function(book) {
-    var id = person.id + "::" + book.title;
-    var saved = bookmarks.some(function(b){ return b.id === id; });
-    return '<div class="book-card">' +
-      '<div class="book-cover-emoji">' + book.emoji + '</div>' +
-      '<div class="book-info">' +
-        '<div class="book-title">' + escapeHTML(book.title) + '</div>' +
-        '<div class="book-author">' + escapeHTML(book.author) + '</div>' +
-        '<button class="book-save-btn' + (saved ? ' saved' : '') + '" ' +
-          'onclick="handleBookSave(' + person.id + ',\'' + book.title.replace(/'/g,"\\'") + '\',\'' + book.author.replace(/'/g,"\\'") + '\',\'' + book.emoji + '\',this)">' +
-          (saved ? '🔖 SAVED' : '✦ SAVE') +
-        '</button>' +
-      '</div>' +
+function submitComment(pid) {
+  var input = document.getElementById("comment-input-" + pid);
+  var text  = input ? input.value.trim() : "";
+  if (!text) return;
+  var token = localStorage.getItem("divine_token");
+  if (!token) { alert("Please log in to share a reflection."); return; }
+  var btn = document.getElementById("comment-btn-" + pid);
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Submitting…"; }
+  fetch(API_BASE + "/comments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ personalityId: pid, commentText: text })
+  })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (btn) { btn.disabled = false; btn.textContent = "🙏 OFFER REFLECTION"; }
+      if (!data.success) { alert(data.message || "Could not post reflection."); return; }
+      if (input) input.value = "";
+      fetchComments(pid);
+    })
+    .catch(function(){
+      if (btn) { btn.disabled = false; btn.textContent = "🙏 OFFER REFLECTION"; }
+      alert("Cannot connect to server.");
+    });
+}
+
+function renderComments(pid, comments) {
+  var list = document.getElementById("comment-list-" + pid);
+  if (!list) return;
+  if (!comments || !comments.length) {
+    list.innerHTML = '<p class="comment-empty">Be the first to offer a reflection.</p>';
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < comments.length; i++) {
+    var c = comments[i];
+    var timeStr = "";
+    if (c.createdAt) {
+      timeStr = new Date(c.createdAt).toLocaleString("en-IN", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+    }
+    html += '<div class="comment-item">' +
+      '<div class="comment-user">🪷 ' + escapeHTML(c.username)    + '</div>' +
+      '<p class="comment-body">'       + escapeHTML(c.commentText) + '</p>' +
+      '<div class="comment-time">'     + timeStr                   + '</div>' +
     '</div>';
-  }).join('');
-
-  return '<div class="books-section">' +
-    '<h3 class="books-section-title">📚 BOOKS & TEACHINGS</h3>' +
-    '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
-    '<div class="books-row" style="margin-top:16px;">' + cards + '</div>' +
-  '</div>';
+  }
+  list.innerHTML = html;
 }
 
-function handleBookSave(pid, title, author, emoji, btnEl) {
-  toggleBookmark(pid, title, author, emoji, btnEl);
-}
-
-/* ── PATCH showDetail to include books ─── */
-var _origShowDetail = showDetail;
-showDetail = function(person) {
-  _origShowDetail(person);
-  // After detail is rendered, inject books before comments
-  var commentSection = document.getElementById("comment-section-" + person.id);
-  if (commentSection) {
-    var booksHTML = buildBooksSection(person);
-    var booksDiv = document.createElement("div");
-    booksDiv.innerHTML = booksHTML;
-    commentSection.parentNode.insertBefore(booksDiv, commentSection);
-  }
-};
-
-/* ── PATCH renderDashboard to update profile btn name ─── */
-var _origRenderDashboard = renderDashboard;
-renderDashboard = function() {
-  _origRenderDashboard();
-  if (currentUser) {
-    var el = document.getElementById("profile-btn-name");
-    if (el) el.textContent = currentUser.username || "Profile";
-    renderBookmarksList();
-  }
-  loadDarkModePref();
-};
-
-/* ── DASHBOARD DROPDOWN TOGGLE ────────── */
+/* ════════════════════════════════════════
+   DROPDOWNS (settings / profile)
+   ════════════════════════════════════════ */
 function toggleDashDropdown(wrapId) {
   var wrap = document.getElementById(wrapId);
   var menu = wrap.querySelector(".dash-dropdown");
   var wasOpen = menu.classList.contains("open");
-  // close all
   document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
   if (!wasOpen) menu.classList.add("open");
 }
-document.addEventListener("click", function(e) {
-  if (!e.target.closest(".dash-dropdown-wrap") && !e.target.closest(".lang-wrap")) {
-    document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
-  }
-});
 
-/* ── ACCORDION ────────────────────────── */
+/* ════════════════════════════════════════
+   ACCORDION
+   ════════════════════════════════════════ */
 function toggleDashAccordion(id) {
   var body = document.getElementById(id);
   if (!body) return;
   body.classList.toggle("open");
-  var head = body.previousElementSibling;
-  if (head) {
-    var caret = head.querySelector(".acc-caret");
-    if (caret) caret.style.transform = body.classList.contains("open") ? "rotate(90deg)" : "";
-  }
+  var caret = body.previousElementSibling && body.previousElementSibling.querySelector(".acc-caret");
+  if (caret) caret.style.transform = body.classList.contains("open") ? "rotate(90deg)" : "";
 }
 
-/* ── DARK MODE ────────────────────────── */
-function loadDarkModePref() {
-  if (localStorage.getItem("ds_dark") === "1") {
-    document.body.classList.add("dark-mode");
-    var t = document.getElementById("darkModeToggle");
-    if (t) t.classList.add("active");
-  }
+/* ════════════════════════════════════════
+   SETTINGS — dark mode, font size, compact, quote
+   ════════════════════════════════════════ */
+function applyStoredPrefs() {
+  // Dark mode
+  var dark = localStorage.getItem("ds_dark") === "1";
+  document.body.classList.toggle("dark-mode", dark);
+  document.querySelectorAll(".dash-toggle[id*='darkMode']").forEach(function(t){
+    t.classList.toggle("active", dark);
+  });
+
+  // Large font
+  var large = localStorage.getItem("ds_font") === "1";
+  document.body.classList.toggle("large-font", large);
+  document.querySelectorAll(".dash-toggle[id*='font']").forEach(function(t){
+    t.classList.toggle("active", large);
+  });
+
+  // Compact cards
+  var compact = localStorage.getItem("ds_compact") === "1";
+  document.body.classList.toggle("compact-cards", compact);
+  var ct = document.getElementById("compactToggle");
+  if (ct) ct.classList.toggle("active", compact);
+
+  // Quote
+  var hideQuote = localStorage.getItem("ds_quote") === "0";
+  var strip = document.querySelector(".quote-strip");
+  if (strip) strip.style.display = hideQuote ? "none" : "";
+  var qt = document.getElementById("quoteToggle");
+  if (qt) qt.classList.toggle("active", !hideQuote);
 }
+
 function toggleDarkMode() {
   var isDark = document.body.classList.toggle("dark-mode");
   localStorage.setItem("ds_dark", isDark ? "1" : "0");
-  var t = document.getElementById("darkModeToggle");
-  if (t) t.classList.toggle("active", isDark);
+  document.querySelectorAll(".dash-toggle[id*='darkMode']").forEach(function(t){
+    t.classList.toggle("active", isDark);
+  });
 }
 
-/* ── COMPACT CARDS ────────────────────── */
+function toggleFontSize() {
+  var large = document.body.classList.toggle("large-font");
+  localStorage.setItem("ds_font", large ? "1" : "0");
+  document.querySelectorAll(".dash-toggle[id*='font']").forEach(function(t){
+    t.classList.toggle("active", large);
+  });
+}
+
 function toggleCompactCards() {
   var on = document.body.classList.toggle("compact-cards");
-  var t = document.getElementById("compactToggle");
-  if (t) t.classList.toggle("active", on);
+  localStorage.setItem("ds_compact", on ? "1" : "0");
+  var ct = document.getElementById("compactToggle");
+  if (ct) ct.classList.toggle("active", on);
 }
 
-/* ── SHOW/HIDE QUOTE ──────────────────── */
 function toggleQuoteStrip() {
   var strip = document.querySelector(".quote-strip");
   if (!strip) return;
   var hidden = strip.style.display === "none";
   strip.style.display = hidden ? "" : "none";
-  var t = document.getElementById("quoteToggle");
-  if (t) t.classList.toggle("active", hidden);
+  localStorage.setItem("ds_quote", hidden ? "1" : "0");
+  var qt = document.getElementById("quoteToggle");
+  if (qt) qt.classList.toggle("active", hidden);
 }
 
-/* ── PROFILE ACCOUNT SETTINGS ────────── */
+function resetPreferences() {
+  ["ds_dark","ds_font","ds_compact","ds_quote"].forEach(function(k){ localStorage.removeItem(k); });
+  document.body.classList.remove("dark-mode","large-font","compact-cards");
+  var strip = document.querySelector(".quote-strip");
+  if (strip) strip.style.display = "";
+  applyStoredPrefs();
+  showToast("Preferences reset");
+}
+
+/* ════════════════════════════════════════
+   PROFILE ACCOUNT SETTINGS
+   ════════════════════════════════════════ */
 function saveDisplayName() {
   var val = document.getElementById("new-display-name").value.trim();
   if (!val || !currentUser) return;
   currentUser.username = val;
   localStorage.setItem("divine_user", JSON.stringify(currentUser));
   document.getElementById("welcome-name-text").textContent = val;
-  var el = document.getElementById("profile-btn-name");
-  if (el) el.textContent = val;
+  var dn = document.getElementById("profile-drop-name");
+  var ai = document.getElementById("profile-avatar-initials");
+  var di = document.getElementById("profile-drop-initials");
+  if (dn) dn.textContent = val;
+  if (ai) ai.textContent = val.charAt(0).toUpperCase();
+  if (di) di.textContent = val.charAt(0).toUpperCase();
   document.getElementById("new-display-name").value = "";
   showToast("Display name updated!");
 }
+
 function savePfpUrl() {
   var val = document.getElementById("new-pfp-url").value.trim();
   if (!val || !currentUser) return;
   currentUser.pfp = val;
   localStorage.setItem("divine_user", JSON.stringify(currentUser));
-  // Update logo pfp in dashboard
-  var imgs = document.querySelectorAll(".logo-pfp");
-  imgs.forEach(function(img){ img.src = val; });
+  var ai = document.getElementById("profile-avatar-img");
+  var di = document.getElementById("profile-drop-img");
+  var li = document.getElementById("dash-logo-pfp");
+  if (ai) { ai.style.display = "block"; ai.src = val; }
+  if (di) { di.style.display = "block"; di.src = val; }
+  if (li) li.src = val;
   document.getElementById("new-pfp-url").value = "";
   showToast("Profile picture updated!");
 }
 
-/* ── TOAST ────────────────────────────── */
+/* ════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════ */
 var _toastTimer;
 function showToast(msg) {
   var toast = document.getElementById("ds-toast");
@@ -822,9 +720,32 @@ function showToast(msg) {
   _toastTimer = setTimeout(function(){ toast.classList.remove("show"); }, 2600);
 }
 
-/* ── LOAD DARK MODE ON PAGE LOAD ─────── */
-document.addEventListener("DOMContentLoaded", function() {
-  if (localStorage.getItem("ds_dark") === "1") {
-    document.body.classList.add("dark-mode");
-  }
+/* ════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════ */
+function safeJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key)); }
+  catch(e) { return null; }
+}
+
+function escapeHTML(str) {
+  var d = document.createElement("div");
+  d.appendChild(document.createTextNode(String(str || "")));
+  return d.innerHTML;
+}
+
+function showError(msg) {
+  var el = document.getElementById("auth-error");
+  if (el) { el.textContent = msg; el.style.display = "block"; }
+}
+
+function hideError() {
+  var el = document.getElementById("auth-error");
+  if (el) el.style.display = "none";
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key !== "Enter") return;
+  var authPage = document.getElementById("page-auth");
+  if (authPage && authPage.classList.contains("active")) handleAuth();
 });
