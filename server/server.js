@@ -25,25 +25,9 @@ const PORT = process.env.PORT || 5000;
 // ── CORS ─────────────────────────────────────────────────────────
 // Allow the frontend origin (Live Server default: 5500) plus
 // any other origins you add to CLIENT_ORIGIN in .env.
-const allowedOrigins = [
-  process.env.CLIENT_ORIGIN || "http://127.0.0.1:5500",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-  "http://localhost:3000",
-  "http://localhost:5000",
-  "https://divine-soul.vercel.app"
-  // Add your production domain here when you deploy:
-  // "https://your-domain.com"
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (e.g., Postman, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error("CORS: origin not allowed — " + origin));
-    },
+    origin: ["https://divine-soul.vercel.app"],
     credentials: true,
   })
 );
