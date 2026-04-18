@@ -37,6 +37,9 @@
         <div class="om-symbol">🕉</div>
         <h1 class="auth-title" data-en="Divine Soul" data-hi="वैदिक संघ">Divine Soul</h1>
         <p class="auth-subtitle" data-en="Gateway to Sacred Knowledge" data-hi="दिव्य ज्ञान का द्वार">Gateway to Sacred Knowledge</p>
+        <div class="auth-site-info">
+          <p data-en="Explore the lives, teachings, and sacred books of great spiritual personalities — a sanctuary for seekers of dharma, bhakti, and jnana." data-hi="महान आध्यात्मिक विभूतियों के जीवन, शिक्षाओं और पवित्र ग्रंथों की खोज करें।">Explore the lives, teachings, and sacred books of great spiritual personalities — a sanctuary for seekers of dharma, bhakti, and jnana.</p>
+        </div>
         <div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>
 
         <div class="auth-tabs">
@@ -92,6 +95,7 @@
            <img src="pfp.jpg" alt="Logo" class="logo-pfp" />
           🪷 <span>Divine Soul</span></div>
         <div class="dash-header-right">
+          <!-- Translate -->
           <div class="lang-wrap" id="dash-lang-wrap">
             <button class="lang-btn dash-lang-btn" onclick="toggleLangMenu('dash-lang-wrap')">
               <span class="lang-btn-text">文ᴬ English</span>
@@ -100,6 +104,49 @@
             <div class="lang-menu lang-menu-light" id="dash-lang-menu">
               <div class="lang-option" onclick="selectLang('en','dash-lang-wrap')">文ᴬ English</div>
               <div class="lang-option" onclick="selectLang('hi','dash-lang-wrap')">🕉 हिन्दी</div>
+            </div>
+          </div>
+          <!-- Settings -->
+          <div class="dash-dropdown-wrap" id="settings-wrap">
+            <button class="dash-icon-btn" onclick="toggleDashDropdown('settings-wrap')" title="Settings">⚙ <span class="dash-btn-label">Settings</span></button>
+            <div class="dash-dropdown" id="settings-menu">
+              <div class="dash-dropdown-title">Settings</div>
+              <div class="dash-toggle-row" onclick="toggleDarkMode()">
+                <span>Dark Mode</span>
+                <div class="dash-toggle" id="darkModeToggle"><div class="dash-toggle-knob"></div></div>
+              </div>
+              <div class="dash-toggle-row" onclick="toggleCompactCards()">
+                <span>Compact Cards</span>
+                <div class="dash-toggle" id="compactToggle"><div class="dash-toggle-knob"></div></div>
+              </div>
+              <div class="dash-toggle-row" onclick="toggleQuoteStrip()">
+                <span>Show Quote</span>
+                <div class="dash-toggle active" id="quoteToggle"><div class="dash-toggle-knob"></div></div>
+              </div>
+            </div>
+          </div>
+          <!-- Profile -->
+          <div class="dash-dropdown-wrap" id="profile-wrap">
+            <button class="dash-icon-btn" onclick="toggleDashDropdown('profile-wrap')" title="Profile">👤 <span class="dash-btn-label" id="profile-btn-name">Profile</span></button>
+            <div class="dash-dropdown dash-dropdown-wide" id="profile-menu">
+              <div class="dash-dropdown-title">My Profile</div>
+              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-account')">👤 Account Settings <span class="acc-caret">›</span></div>
+              <div class="dash-accordion-body" id="acc-account">
+                <div class="dash-field">
+                  <label>Display Name</label>
+                  <input type="text" id="new-display-name" placeholder="New name…" />
+                  <button class="dash-small-btn" onclick="saveDisplayName()">Save</button>
+                </div>
+                <div class="dash-field">
+                  <label>Profile Picture URL</label>
+                  <input type="text" id="new-pfp-url" placeholder="https://…" />
+                  <button class="dash-small-btn" onclick="savePfpUrl()">Save</button>
+                </div>
+              </div>
+              <div class="dash-accordion-head" onclick="toggleDashAccordion('acc-bookmarks')">🔖 My Bookmarks <span class="acc-caret">›</span></div>
+              <div class="dash-accordion-body" id="acc-bookmarks">
+                <div id="bookmarks-list"><p class="dash-empty-msg">No saved books yet.</p></div>
+              </div>
             </div>
           </div>
           <button class="signout-btn" onclick="logout()" data-en="SIGN OUT" data-hi="साइन आउट">SIGN OUT</button>

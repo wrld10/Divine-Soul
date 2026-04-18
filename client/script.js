@@ -580,3 +580,251 @@ document.addEventListener("keydown", function (e) {
     handleAuth();
   }
 });
+
+/* ════════════════════════════════════════
+   ADDED — Settings, Profile, Books, Bookmarks, Dark Mode, Toast
+   ════════════════════════════════════════ */
+
+/* Fix name */
+// Vinod Baba → Vinod Baba already corrected in PERSONALITIES data above
+
+/* ── BOOKS DATA per personality ─────────── */
+var BOOKS = {
+  1: [
+    { title: "Hit Chaurasi", author: "Hariray", emoji: "📿", genre: "Bhakti Scripture" },
+    { title: "Radhastami Mahatmya", author: "Tradition", emoji: "🌸", genre: "Devotion" },
+    { title: "Seva Kunja Ke Phool", author: "Premanand Maharaj", emoji: "🪷", genre: "Kirtan" },
+    { title: "Radha Madhuri", author: "Premanand Maharaj", emoji: "💛", genre: "Bhakti" },
+    { title: "Vrindavan Leela", author: "Premanand Maharaj", emoji: "🌿", genre: "Pastimes" },
+    { title: "Prema Bhakti Chandrika", author: "Narottama Das", emoji: "🌙", genre: "Vaishnava" }
+  ],
+  2: [
+    { title: "Vaishnava Seva Rahasya", author: "Vinod Baba", emoji: "🔆", genre: "Seva" },
+    { title: "Bhakti Ki Seedhi", author: "Vinod Baba", emoji: "🪜", genre: "Devotion" },
+    { title: "Priya Kunj Amrit Vachan", author: "Vinod Baba", emoji: "📖", genre: "Teachings" },
+    { title: "Sharanagati Darshan", author: "Vinod Baba", emoji: "🙏", genre: "Surrender" }
+  ],
+  3: [
+    { title: "Pada Yatra", author: "Lokanath Swami", emoji: "👣", genre: "Pilgrimage" },
+    { title: "Vraj Mandal Parikrama", author: "Lokanath Swami", emoji: "🏔️", genre: "Yatra" },
+    { title: "Prabhupada My Strength", author: "Lokanath Swami", emoji: "✨", genre: "Biography" },
+    { title: "Chant & Be Happy", author: "Prabhupada (fwd by LS)", emoji: "🎵", genre: "Japa" },
+    { title: "Walking with Krishna", author: "Lokanath Swami", emoji: "🌿", genre: "Devotion" },
+    { title: "Bhakti Rahasya", author: "Lokanath Swami", emoji: "📜", genre: "Bhakti" }
+  ]
+};
+
+/* ── BOOKMARKS ────────────────────────── */
+var bookmarks = loadBookmarks();
+
+function loadBookmarks() {
+  try { return JSON.parse(localStorage.getItem("ds_bookmarks") || "[]"); }
+  catch(e) { return []; }
+}
+function saveBookmarks() {
+  localStorage.setItem("ds_bookmarks", JSON.stringify(bookmarks));
+}
+
+function toggleBookmark(pid, title, author, emoji, btnEl) {
+  var id = pid + "::" + title;
+  var idx = bookmarks.findIndex(function(b){ return b.id === id; });
+  if (idx > -1) {
+    bookmarks.splice(idx, 1);
+    btnEl.textContent = "✦ SAVE";
+    btnEl.classList.remove("saved");
+    showToast("Bookmark removed");
+  } else {
+    bookmarks.push({ id: id, pid: pid, title: title, author: author, emoji: emoji });
+    btnEl.textContent = "🔖 SAVED";
+    btnEl.classList.add("saved");
+    showToast("Saved to bookmarks!");
+  }
+  saveBookmarks();
+  renderBookmarksList();
+}
+
+function removeBookmark(id) {
+  bookmarks = bookmarks.filter(function(b){ return b.id !== id; });
+  saveBookmarks();
+  renderBookmarksList();
+}
+
+function renderBookmarksList() {
+  var el = document.getElementById("bookmarks-list");
+  if (!el) return;
+  if (!bookmarks.length) {
+    el.innerHTML = '<p class="dash-empty-msg">No saved books yet.</p>';
+    return;
+  }
+  el.innerHTML = bookmarks.map(function(b) {
+    return '<div class="bookmark-entry">' +
+      '<span class="bookmark-emoji">' + b.emoji + '</span>' +
+      '<div class="bookmark-info"><strong>' + escapeHTML(b.title) + '</strong><span>' + escapeHTML(b.author) + '</span></div>' +
+      '<button class="bookmark-remove" onclick="removeBookmark(\'' + b.id.replace(/'/g,"\\'") + '\')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── BOOKS RENDERER (called from showDetail) ── */
+function buildBooksSection(person) {
+  var books = BOOKS[person.id];
+  if (!books || !books.length) return '';
+
+  var cards = books.map(function(book) {
+    var id = person.id + "::" + book.title;
+    var saved = bookmarks.some(function(b){ return b.id === id; });
+    return '<div class="book-card">' +
+      '<div class="book-cover-emoji">' + book.emoji + '</div>' +
+      '<div class="book-info">' +
+        '<div class="book-title">' + escapeHTML(book.title) + '</div>' +
+        '<div class="book-author">' + escapeHTML(book.author) + '</div>' +
+        '<button class="book-save-btn' + (saved ? ' saved' : '') + '" ' +
+          'onclick="handleBookSave(' + person.id + ',\'' + book.title.replace(/'/g,"\\'") + '\',\'' + book.author.replace(/'/g,"\\'") + '\',\'' + book.emoji + '\',this)">' +
+          (saved ? '🔖 SAVED' : '✦ SAVE') +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="books-section">' +
+    '<h3 class="books-section-title">📚 BOOKS & TEACHINGS</h3>' +
+    '<div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>' +
+    '<div class="books-row" style="margin-top:16px;">' + cards + '</div>' +
+  '</div>';
+}
+
+function handleBookSave(pid, title, author, emoji, btnEl) {
+  toggleBookmark(pid, title, author, emoji, btnEl);
+}
+
+/* ── PATCH showDetail to include books ─── */
+var _origShowDetail = showDetail;
+showDetail = function(person) {
+  _origShowDetail(person);
+  // After detail is rendered, inject books before comments
+  var commentSection = document.getElementById("comment-section-" + person.id);
+  if (commentSection) {
+    var booksHTML = buildBooksSection(person);
+    var booksDiv = document.createElement("div");
+    booksDiv.innerHTML = booksHTML;
+    commentSection.parentNode.insertBefore(booksDiv, commentSection);
+  }
+};
+
+/* ── PATCH renderDashboard to update profile btn name ─── */
+var _origRenderDashboard = renderDashboard;
+renderDashboard = function() {
+  _origRenderDashboard();
+  if (currentUser) {
+    var el = document.getElementById("profile-btn-name");
+    if (el) el.textContent = currentUser.username || "Profile";
+    renderBookmarksList();
+  }
+  loadDarkModePref();
+};
+
+/* ── DASHBOARD DROPDOWN TOGGLE ────────── */
+function toggleDashDropdown(wrapId) {
+  var wrap = document.getElementById(wrapId);
+  var menu = wrap.querySelector(".dash-dropdown");
+  var wasOpen = menu.classList.contains("open");
+  // close all
+  document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
+  if (!wasOpen) menu.classList.add("open");
+}
+document.addEventListener("click", function(e) {
+  if (!e.target.closest(".dash-dropdown-wrap") && !e.target.closest(".lang-wrap")) {
+    document.querySelectorAll(".dash-dropdown").forEach(function(m){ m.classList.remove("open"); });
+  }
+});
+
+/* ── ACCORDION ────────────────────────── */
+function toggleDashAccordion(id) {
+  var body = document.getElementById(id);
+  if (!body) return;
+  body.classList.toggle("open");
+  var head = body.previousElementSibling;
+  if (head) {
+    var caret = head.querySelector(".acc-caret");
+    if (caret) caret.style.transform = body.classList.contains("open") ? "rotate(90deg)" : "";
+  }
+}
+
+/* ── DARK MODE ────────────────────────── */
+function loadDarkModePref() {
+  if (localStorage.getItem("ds_dark") === "1") {
+    document.body.classList.add("dark-mode");
+    var t = document.getElementById("darkModeToggle");
+    if (t) t.classList.add("active");
+  }
+}
+function toggleDarkMode() {
+  var isDark = document.body.classList.toggle("dark-mode");
+  localStorage.setItem("ds_dark", isDark ? "1" : "0");
+  var t = document.getElementById("darkModeToggle");
+  if (t) t.classList.toggle("active", isDark);
+}
+
+/* ── COMPACT CARDS ────────────────────── */
+function toggleCompactCards() {
+  var on = document.body.classList.toggle("compact-cards");
+  var t = document.getElementById("compactToggle");
+  if (t) t.classList.toggle("active", on);
+}
+
+/* ── SHOW/HIDE QUOTE ──────────────────── */
+function toggleQuoteStrip() {
+  var strip = document.querySelector(".quote-strip");
+  if (!strip) return;
+  var hidden = strip.style.display === "none";
+  strip.style.display = hidden ? "" : "none";
+  var t = document.getElementById("quoteToggle");
+  if (t) t.classList.toggle("active", hidden);
+}
+
+/* ── PROFILE ACCOUNT SETTINGS ────────── */
+function saveDisplayName() {
+  var val = document.getElementById("new-display-name").value.trim();
+  if (!val || !currentUser) return;
+  currentUser.username = val;
+  localStorage.setItem("divine_user", JSON.stringify(currentUser));
+  document.getElementById("welcome-name-text").textContent = val;
+  var el = document.getElementById("profile-btn-name");
+  if (el) el.textContent = val;
+  document.getElementById("new-display-name").value = "";
+  showToast("Display name updated!");
+}
+function savePfpUrl() {
+  var val = document.getElementById("new-pfp-url").value.trim();
+  if (!val || !currentUser) return;
+  currentUser.pfp = val;
+  localStorage.setItem("divine_user", JSON.stringify(currentUser));
+  // Update logo pfp in dashboard
+  var imgs = document.querySelectorAll(".logo-pfp");
+  imgs.forEach(function(img){ img.src = val; });
+  document.getElementById("new-pfp-url").value = "";
+  showToast("Profile picture updated!");
+}
+
+/* ── TOAST ────────────────────────────── */
+var _toastTimer;
+function showToast(msg) {
+  var toast = document.getElementById("ds-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "ds-toast";
+    toast.className = "ds-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ toast.classList.remove("show"); }, 2600);
+}
+
+/* ── LOAD DARK MODE ON PAGE LOAD ─────── */
+document.addEventListener("DOMContentLoaded", function() {
+  if (localStorage.getItem("ds_dark") === "1") {
+    document.body.classList.add("dark-mode");
+  }
+});
