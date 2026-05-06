@@ -300,15 +300,25 @@ function renderDashboard() {
   if (dropInit)   dropInit.textContent   = initLetter;
   if (dropName)   dropName.textContent   = name;
 
-  // If user set a custom pfp
+  // Profile avatar: only show image if user explicitly set a custom pfp
+  var avatarImg = document.getElementById("profile-avatar-img");
+  var dropImg   = document.getElementById("profile-drop-img");
+  var avatarInitEl = document.getElementById("profile-avatar-initials");
+  var dropInitEl   = document.getElementById("profile-drop-initials");
   if (currentUser.pfp) {
-    var avatarImg = document.getElementById("profile-avatar-img");
-    var dropImg   = document.getElementById("profile-drop-img");
-    var logoImg   = document.getElementById("dash-logo-pfp");
-    if (avatarImg) avatarImg.src = currentUser.pfp;
-    if (dropImg)   dropImg.src   = currentUser.pfp;
-    if (logoImg)   logoImg.src   = currentUser.pfp;
+    if (avatarImg) { avatarImg.src = currentUser.pfp; avatarImg.style.display = "block"; }
+    if (dropImg)   { dropImg.src   = currentUser.pfp; dropImg.style.display   = "block"; }
+    if (avatarInitEl) avatarInitEl.style.display = "none";
+    if (dropInitEl)   dropInitEl.style.display   = "none";
+  } else {
+    // No custom pfp — use default avatar image
+    if (avatarImg)    { avatarImg.src = "default-avatar.png"; avatarImg.style.display = "block"; }
+    if (dropImg)      { dropImg.src   = "default-avatar.png"; dropImg.style.display   = "block"; }
+    if (avatarInitEl) avatarInitEl.style.display = "none";
+    if (dropInitEl)   dropInitEl.style.display   = "none";
   }
+  var logoImg = document.getElementById("dash-logo-pfp");
+  if (logoImg && currentUser.pfp) logoImg.src = currentUser.pfp;
 
   var q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   document.getElementById("dash-quote").textContent = "\u201c" + q + "\u201d";
@@ -749,3 +759,48 @@ document.addEventListener("keydown", function(e) {
   var authPage = document.getElementById("page-auth");
   if (authPage && authPage.classList.contains("active")) handleAuth();
 });
+
+/* ════════════════════════════════════════
+   SEARCH — personalities + books
+   ════════════════════════════════════════ */
+function filterPersonalities(query) {
+  var q = query.trim().toLowerCase();
+  var clearBtn = document.getElementById("search-clear-btn");
+  var noResults = document.getElementById("search-no-results");
+  if (clearBtn) clearBtn.style.display = q ? "block" : "none";
+
+  var cards = document.querySelectorAll("#cards-grid .p-card");
+  var visibleCount = 0;
+
+  cards.forEach(function(card, idx) {
+    var person = PERSONALITIES[idx];
+    if (!person) return;
+
+    // Match against name, title, shortDesc, and book titles
+    var searchText = [
+      person.name,
+      person.title,
+      person.shortDesc,
+      person.tradition,
+      person.location
+    ].join(" ").toLowerCase();
+
+    // Also search book titles for this personality
+    var books = BOOKS[person.id] || [];
+    books.forEach(function(b) {
+      searchText += " " + b.title.toLowerCase() + " " + b.author.toLowerCase();
+    });
+
+    var match = !q || searchText.indexOf(q) !== -1;
+    card.style.display = match ? "" : "none";
+    if (match) visibleCount++;
+  });
+
+  if (noResults) noResults.style.display = (q && visibleCount === 0) ? "block" : "none";
+}
+
+function clearSearch() {
+  var input = document.getElementById("personality-search");
+  if (input) { input.value = ""; input.focus(); }
+  filterPersonalities("");
+}

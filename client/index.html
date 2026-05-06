@@ -182,18 +182,20 @@
           <!-- Profile AVATAR — circular, rightmost -->
           <div class="dash-dropdown-wrap" id="profile-wrap">
             <button class="profile-avatar-btn" onclick="toggleDashDropdown('profile-wrap')" id="profile-avatar-btn">
-              <img src="pfp.jpg" alt="Profile" class="profile-avatar-img" id="profile-avatar-img"
+              <img src="default-avatar.png" alt="Profile" class="profile-avatar-img" id="profile-avatar-img"
+                style="display:block;"
                 onerror="this.style.display='none';document.getElementById('profile-avatar-initials').style.display='flex';" />
-              <span class="profile-avatar-initials" id="profile-avatar-initials">?</span>
+              <span class="profile-avatar-initials" id="profile-avatar-initials" style="display:none;">?</span>
             </button>
 
             <div class="dash-dropdown dash-dropdown-wide" id="profile-menu">
               <!-- Profile header inside dropdown -->
               <div class="profile-drop-header">
                 <div class="profile-drop-avatar-wrap">
-                  <img src="pfp.jpg" alt="" class="profile-drop-avatar-img" id="profile-drop-img"
+                  <img src="default-avatar.png" alt="" class="profile-drop-avatar-img" id="profile-drop-img"
+                    style="display:block;"
                     onerror="this.style.display='none';document.getElementById('profile-drop-initials').style.display='flex';" />
-                  <span class="profile-drop-initials" id="profile-drop-initials">?</span>
+                  <span class="profile-drop-initials" id="profile-drop-initials" style="display:none;">?</span>
                 </div>
                 <div class="profile-drop-info">
                   <div class="profile-drop-name" id="profile-drop-name">Seeker</div>
@@ -248,11 +250,21 @@
 
     <div class="personalities-section-bg">
       <section class="personalities-section">
+        <div class="search-bar-wrap">
+          <div class="search-bar-inner">
+            <span class="search-icon-sym">🔍</span>
+            <input type="text" id="personality-search" class="personality-search-input"
+              placeholder="Search personalities or books…"
+              oninput="filterPersonalities(this.value)" />
+            <button class="search-clear-btn" id="search-clear-btn" onclick="clearSearch()" style="display:none;">✕</button>
+          </div>
+        </div>
         <div class="section-header">
           <div class="om-divider"><span></span><span class="om-icon">✦</span><span></span></div>
           <h2 class="section-title" data-en="Spiritual Luminaries" data-hi="आध्यात्मिक विभूतियाँ">Spiritual Luminaries</h2>
           <p class="section-sub" data-en="Discover the lives and teachings of sacred guides" data-hi="दिव्य मार्गदर्शकों से मिलें">Discover the lives and teachings of sacred guides</p>
         </div>
+        <div id="search-no-results" class="search-no-results" style="display:none;">No results found for your search.</div>
         <div class="cards-grid" id="cards-grid"></div>
       </section>
     </div>
